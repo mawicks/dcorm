@@ -12,6 +12,11 @@
 	// 👇 Configure tool-specific properties.
 	"customizations": {
 		"vscode": {
+			"settings": {
+				"python.venvFolders": [
+					".venv/"
+				]
+			},
 			"extensions": [
 				"ms-python.python",
 				"njpwerner.autodocstring"
