@@ -135,9 +135,7 @@ def test_create_no_exception_with_drop_if_exists(
     dcorm.create(with_tables_created, SomeDataClass, drop_if_exists=True)
 
 
-def test_insert_one(
-    with_tables_created: sqlite3.Connection, some_instance: SomeDataClass
-):
+def test_insert(with_tables_created: sqlite3.Connection, some_instance: SomeDataClass):
     id = dcorm.insert(with_tables_created, some_instance)
     assert id is not None
 
@@ -211,3 +209,11 @@ def test_instances_from_get_all_can_be_deleted(with_two_rows_inserted):
     for instance in dcorm.get_all(with_two_rows_inserted, SomeDataClass):
         dcorm.delete(with_two_rows_inserted, instance)
     assert len(list(dcorm.get_all(with_two_rows_inserted, SomeDataClass))) == 0
+
+
+def test_inserting_container_also_inserts_containee(
+    with_tables_created, containing_instance
+):
+    dcorm.insert(with_tables_created, containing_instance)
+    all_containee_instances = list(dcorm.get_all(with_tables_created, SomeDataClass))
+    assert len(all_containee_instances) == 1
