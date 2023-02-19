@@ -93,6 +93,12 @@ def with_one_row_inserted(with_tables_created, some_instance):
     return with_tables_created
 
 
+@pytest.fixture
+def with_two_rows_inserted(with_one_row_inserted, some_other_instance):
+    dcorm.insert(with_one_row_inserted, some_other_instance)
+    return with_one_row_inserted
+
+
 def test_orm_decorated_class_has_orm_returns_true():
     assert dcorm.has_orm(SomeDataClass) is True
 
@@ -194,3 +200,8 @@ def test_read_causes_exception_after_delete(
     dcorm.delete(with_tables_created, some_instance)
     with pytest.raises(Exception):
         dcorm.get_by_id(with_tables_created, SomeDataClass, id)
+
+
+def test_get_all_returns_two_instances(with_two_rows_inserted):
+    all_instances = list(dcorm.get_all(with_two_rows_inserted, SomeDataClass))
+    assert len(all_instances) == 2
