@@ -205,3 +205,9 @@ def test_read_causes_exception_after_delete(
 def test_get_all_returns_two_instances(with_two_rows_inserted):
     all_instances = list(dcorm.get_all(with_two_rows_inserted, SomeDataClass))
     assert len(all_instances) == 2
+
+
+def test_instances_from_get_all_can_be_deleted(with_two_rows_inserted):
+    for instance in dcorm.get_all(with_two_rows_inserted, SomeDataClass):
+        dcorm.delete(with_two_rows_inserted, instance)
+    assert len(list(dcorm.get_all(with_two_rows_inserted, SomeDataClass))) == 0
