@@ -89,8 +89,24 @@ def with_tables_created(connection):
 
 @pytest.fixture
 def with_one_row_inserted(with_tables_created, some_instance):
-    dcorm.insert_one(with_tables_created, some_instance)
+    dcorm.insert(with_tables_created, some_instance)
     return with_tables_created
+
+
+def test_orm_decorated_class_has_orm_returns_true():
+    assert dcorm.has_orm(SomeDataClass) is True
+
+
+def test_orm_decorated_instance_has_orm_returns_true(some_instance):
+    assert dcorm.has_orm(some_instance) is True
+
+
+def test_undecorated_class_has_orm_returns_false():
+    assert dcorm.has_orm(SomeNonDataClass) is False
+
+
+def test_undecorated_instance_has_orm_returns_false():
+    assert dcorm.has_orm(SomeNonDataClass()) is False
 
 
 def test_create_raises_on_non_dataclass(connection: sqlite3.Connection):
@@ -116,34 +132,65 @@ def test_create_no_exception_with_drop_if_exists(
 def test_insert_one(
     with_tables_created: sqlite3.Connection, some_instance: SomeDataClass
 ):
-    id = dcorm.insert_one(with_tables_created, some_instance)
+    id = dcorm.insert(with_tables_created, some_instance)
     assert id is not None
 
 
 def test_query_one(
     with_tables_created: sqlite3.Connection, some_instance: SomeDataClass
 ):
-    id = dcorm.insert_one(with_tables_created, some_instance)
+    id = dcorm.insert(with_tables_created, some_instance)
     read_instance = dcorm.get_by_id(with_tables_created, SomeDataClass, id)
     assert read_instance == some_instance
 
 
-def test_update_modifies_record(
+def test_update_by_id_modifies_record(
     with_tables_created: sqlite3.Connection,
     some_instance: SomeDataClass,
     some_other_instance: SomeDataClass,
 ):
-    id = dcorm.insert_one(with_tables_created, some_instance)
+    id = dcorm.insert(with_tables_created, some_instance)
     dcorm.update_by_id(with_tables_created, some_other_instance, id)
     read_instance = dcorm.get_by_id(with_tables_created, SomeDataClass, id)
     assert read_instance == some_other_instance
 
 
-def test_read_causes_exception_after_drop(
+def test_update_modifies_record(
+    with_tables_created: sqlite3.Connection,
+    some_instance: SomeDataClass,
+):
+    id = dcorm.insert(with_tables_created, some_instance)
+
+    # Change some fields
+    some_instance.an_int = SOME_OTHER_INT
+    some_instance.a_float = SOME_OTHER_FLOAT
+
+    # Update the record
+    dcorm.update(with_tables_created, some_instance)
+
+    # Read the record back from it's original location
+    read_instance = dcorm.get_by_id(with_tables_created, SomeDataClass, id)
+
+    # Confirm some change/unchanged fields.
+    assert read_instance.an_int == SOME_OTHER_INT
+    assert read_instance.a_float == SOME_OTHER_FLOAT
+    assert read_instance.a_str == SOME_STRING
+
+
+def test_read_causes_exception_after_delete_by_id(
     with_tables_created: sqlite3.Connection, some_instance: SomeDataClass
 ):
-    id = dcorm.insert_one(with_tables_created, some_instance)
+    id = dcorm.insert(with_tables_created, some_instance)
     dcorm.get_by_id(with_tables_created, SomeDataClass, id)
     dcorm.delete_by_id(with_tables_created, SomeDataClass, id)
+    with pytest.raises(Exception):
+        dcorm.get_by_id(with_tables_created, SomeDataClass, id)
+
+
+def test_read_causes_exception_after_delete(
+    with_tables_created: sqlite3.Connection, some_instance: SomeDataClass
+):
+    id = dcorm.insert(with_tables_created, some_instance)
+    dcorm.delete(with_tables_created, some_instance)
     with pytest.raises(Exception):
         dcorm.get_by_id(with_tables_created, SomeDataClass, id)
