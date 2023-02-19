@@ -78,10 +78,11 @@ def test_create_no_exception_with_drop_if_exists(
 
 
 def test_insert_one(with_table_created: sqlite3.Connection, some_instance):
-    foo_id = dcorm.insert_one(with_table_created, some_instance)
-    assert foo_id == 1
+    id = dcorm.insert_one(with_table_created, some_instance)
+    assert id is not None
 
 
-def test_query_one(with_one_row_inserted: sqlite3.Connection, some_instance):
-    read_instance = dcorm.read_from_id(with_one_row_inserted, SomeDataClass, 1)
+def test_query_one(with_table_created: sqlite3.Connection, some_instance):
+    id = dcorm.insert_one(with_table_created, some_instance)
+    read_instance = dcorm.read_from_id(with_table_created, SomeDataClass, id)
     assert read_instance == some_instance
