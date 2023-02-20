@@ -140,7 +140,7 @@ def test_insert(with_tables_created: sqlite3.Connection, some_instance: SomeData
     assert id is not None
 
 
-def test_query_one(
+def test_read_after_insert_returns_expected_record(
     with_tables_created: sqlite3.Connection, some_instance: SomeDataClass
 ):
     id = dcorm.insert(with_tables_created, some_instance)
@@ -203,6 +203,12 @@ def test_read_causes_exception_after_delete(
 def test_get_all_returns_two_instances(with_two_rows_inserted):
     all_instances = list(dcorm.get_all(with_two_rows_inserted, SomeDataClass))
     assert len(all_instances) == 2
+
+
+def test_get_all_instances_of_expected_class(with_two_rows_inserted):
+    all_instances = list(dcorm.get_all(with_two_rows_inserted, SomeDataClass))
+    assert type(all_instances[0]) is SomeDataClass
+    assert type(all_instances[1]) is SomeDataClass
 
 
 def test_instances_from_get_all_can_be_deleted(with_two_rows_inserted):

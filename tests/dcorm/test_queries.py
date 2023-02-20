@@ -60,3 +60,7 @@ def test_empty_select_foo_returns_two_records(relations_inserted):
 
 def test_empty_select_bar_returns_four_records(relations_inserted):
     assert len(list(Select(Bar)(relations_inserted))) == 4
+
+
+def test_select_bar_join_foo_returns_four_records(relations_inserted):
+    assert len(list(Select(Bar).join("some_foo")(relations_inserted))) == 4
