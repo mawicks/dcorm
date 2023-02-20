@@ -66,6 +66,16 @@ def test_select_bar_join_foo_returns_four_records(relations_inserted):
     assert len(list(Select(Bar).join("some_foo")(relations_inserted))) == 4
 
 
+def test_select_bar_join_foo_raises_with_invalid_field_name(relations_inserted):
+    with pytest.raises(ValueError):
+        Select(Bar).join("wrong_name")
+
+
+def test_select_bar_join_foo_raises_with_non_dataclass_field(relations_inserted):
+    with pytest.raises(ValueError):
+        Select(Bar).join("b")
+
+
 def test_select_bar_join_foo_where_specific_foo_returns_two_records(relations_inserted):
     query = Select(Bar).join("some_foo").where("some_foo.a = 1")
     results = list(query(relations_inserted))
