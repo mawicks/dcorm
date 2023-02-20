@@ -71,7 +71,7 @@ def some_other_instance():
 
 @pytest.fixture
 def containing_instance(some_instance):
-    return ContainingDataClass(a=1, contained=some_instance)
+    return ContainingDataClass(a=13, contained=some_instance)
 
 
 @pytest.fixture
@@ -217,3 +217,13 @@ def test_inserting_container_also_inserts_containee(
     dcorm.insert(with_tables_created, containing_instance)
     all_containee_instances = list(dcorm.get_all(with_tables_created, SomeDataClass))
     assert len(all_containee_instances) == 1
+
+
+def test_contained_class_autoloads(with_tables_created, containing_instance):
+    dcorm.insert(with_tables_created, containing_instance)
+    all_container_instances = list(
+        dcorm.get_all(with_tables_created, ContainingDataClass)
+    )
+    single_instance = all_container_instances[0]
+    contained = single_instance.contained
+    assert contained.an_int == SOME_INT
