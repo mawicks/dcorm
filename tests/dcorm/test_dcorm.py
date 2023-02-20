@@ -48,7 +48,7 @@ class SomeDataClass:
 @dataclass
 class ContainingDataClass:
     a: int
-    contained: SomeDataClass
+    containee: SomeDataClass
 
 
 @pytest.fixture
@@ -71,7 +71,7 @@ def some_other_instance():
 
 @pytest.fixture
 def containing_instance(some_instance):
-    return ContainingDataClass(a=13, contained=some_instance)
+    return ContainingDataClass(a=13, containee=some_instance)
 
 
 @pytest.fixture
@@ -219,11 +219,30 @@ def test_inserting_container_also_inserts_containee(
     assert len(all_containee_instances) == 1
 
 
-def test_contained_class_autoloads(with_tables_created, containing_instance):
+def test_inserting_container_doesnt_insert_preexisting_containee(
+    with_tables_created, containing_instance
+):
+    dcorm.insert(with_tables_created, containing_instance.containee)
+    dcorm.insert(with_tables_created, containing_instance)
+    all_containee_instances = list(dcorm.get_all(with_tables_created, SomeDataClass))
+    assert len(all_containee_instances) == 1
+
+
+def test_updating_container_modifies_containee_reference(
+    with_tables_created, containing_instance, some_other_instance
+):
+    id = dcorm.insert(with_tables_created, containing_instance)
+    containing_instance.containee = some_other_instance
+    dcorm.update(with_tables_created, containing_instance)
+    read_container = dcorm.get_by_id(with_tables_created, ContainingDataClass, id)
+    assert read_container.containee == some_other_instance
+
+
+def test_containee_autoloads(with_tables_created, containing_instance):
     dcorm.insert(with_tables_created, containing_instance)
     all_container_instances = list(
         dcorm.get_all(with_tables_created, ContainingDataClass)
     )
     single_instance = all_container_instances[0]
-    contained = single_instance.contained
-    assert contained.an_int == SOME_INT
+    containee = single_instance.containee
+    assert containee.an_int == SOME_INT
