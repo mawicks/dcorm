@@ -66,12 +66,12 @@ def test_select_bar_join_foo_returns_four_records(relations_inserted):
     assert len(list(Select(Bar).join("some_foo")(relations_inserted))) == 4
 
 
-def test_select_bar_join_foo_raises_with_invalid_field_name(relations_inserted):
+def test_select_bar_join_foo_raises_with_invalid_field_name():
     with pytest.raises(ValueError):
         Select(Bar).join("wrong_name")
 
 
-def test_select_bar_join_foo_raises_with_non_dataclass_field(relations_inserted):
+def test_select_bar_join_foo_raises_with_non_dataclass_field():
     with pytest.raises(ValueError):
         Select(Bar).join("b")
 
@@ -80,6 +80,21 @@ def test_select_bar_join_foo_where_specific_foo_returns_two_records(relations_in
     query = Select(Bar).join("some_foo").where("some_foo.a = 1")
     results = list(query(relations_inserted))
     assert len(results) == 2
+
+
+def test_select_bar_join_foo_by_joining_select(relations_inserted):
+    selected_foo = Select(Foo).where("Foo.a = 1")
+    query = Select(Bar).join("some_foo", selected_foo)
+    results = list(query(relations_inserted))
+    assert len(results) == 2
+
+
+def test_select_bar_join_bar_on_some_foo_raises_type_error():
+    selected_bar = Select(Bar).where("Bar.b = 1")
+    # This should raise a type error because some_foo has type Foo
+    # but we're joining it on a Select(Bar)
+    with pytest.raises(TypeError):
+        Select(Bar).join("some_foo", selected_bar)
 
 
 def test_select_bar_join_foo_where_specific_foo_returns_correct_records(
