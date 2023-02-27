@@ -32,7 +32,7 @@ class Registration:
     course: Course
 
 
-class Registrations:
+class RegistrationDatabase:
     def __init__(self, connection):
         self.connection = connection
 
@@ -91,12 +91,20 @@ def empty_db():
 
 @pytest.fixture
 def registration_database(empty_db):
-    registrations = Registrations(empty_db)
+    registrations = RegistrationDatabase(empty_db)
     registrations.init()
     return empty_db
 
 
 # Tests for queries involving a relation
+def test_registrations_where_equal_algebra_returns_two(registration_database):
+    algebra = next(
+        iter(Select(Course).where("title = ?", ("Algebra",))(registration_database))
+    )
+    registrations = Select(Registration).where_equal("course", algebra)(
+        registration_database
+    )
+    assert len(list(registrations)) == 2
 
 
 @pytest.mark.parametrize(
