@@ -25,8 +25,12 @@ SOME_UTC_DATETIME = dt.datetime(
 SOME_OTHER_UTC_DATETIME = dt.datetime(
     year=2022, month=9, day=15, hour=10, minute=25, tzinfo=dt.timezone.utc
 )
-SOME_EST_DATETIME = dt.datetime(
+SOME_DATETIME = dt.datetime(
     year=2023, month=2, day=18, hour=19, minute=25, tzinfo=ZoneInfo("America/New_York")
+)
+
+SOME_OTHER_DATETIME = dt.datetime(
+    year=2023, month=9, day=15, hour=10, minute=25, tzinfo=ZoneInfo("America/New_York")
 )
 
 
@@ -53,9 +57,7 @@ class ContainingDataClass:
 
 @pytest.fixture
 def some_instance():
-    return SomeDataClass(
-        SOME_INT, SOME_FLOAT, SOME_STRING, SOME_DATE, SOME_UTC_DATETIME
-    )
+    return SomeDataClass(SOME_INT, SOME_FLOAT, SOME_STRING, SOME_DATE, SOME_DATETIME)
 
 
 @pytest.fixture
@@ -65,7 +67,7 @@ def some_other_instance():
         SOME_OTHER_FLOAT,
         SOME_OTHER_STRING,
         SOME_OTHER_DATE,
-        SOME_OTHER_UTC_DATETIME,
+        SOME_OTHER_DATETIME,
     )
 
 
