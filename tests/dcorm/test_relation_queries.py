@@ -107,6 +107,19 @@ def test_registrations_where_equal_algebra_returns_two(registration_database):
     assert len(list(registrations)) == 2
 
 
+# Tests for queries involving a relation
+def test_registrations_where_with_object_substitution_for_algebra_returns_two(
+    registration_database,
+):
+    algebra = next(
+        iter(Select(Course).where("title = ?", ("Algebra",))(registration_database))
+    )
+    registrations = Select(Registration).where("course = ?", (algebra,))(
+        registration_database
+    )
+    assert len(list(registrations)) == 2
+
+
 @pytest.mark.parametrize(
     "course,expected_students",
     [
