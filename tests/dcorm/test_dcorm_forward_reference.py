@@ -45,7 +45,7 @@ def test_create_executes_no_exception(connection: sqlite3.Connection):
     dcorm.create(connection, SelfReference)
 
 
-def test_insert(with_tables_created: sqlite3.Connection):
+def test_inserted_child_is_retrievable(with_tables_created: sqlite3.Connection):
     parent = SelfReference(name="parent")
     child = SelfReference(name="child")
     child.parent = parent
