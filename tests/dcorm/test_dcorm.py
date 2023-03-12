@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import datetime as dt
+from typing import Optional
 from zoneinfo import ZoneInfo
 import sqlite3
 
@@ -38,6 +39,13 @@ class SomeNonDataClass:
     an_int: int
 
 
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+
+
 @dcorm.orm_dataclass
 @dataclass
 class SomeDataClass:
@@ -46,6 +54,7 @@ class SomeDataClass:
     a_str: str
     a_date: dt.date
     a_datetime: dt.datetime
+    a_nullable_int: None | int = None
 
 
 @dcorm.orm_dataclass
@@ -79,7 +88,9 @@ def containing_instance(some_instance):
 @pytest.fixture
 def connection():
     print("Connection Called")
-    return sqlite3.connect(":memory:")
+    connection = sqlite3.connect(":memory:")
+    # connection.row_factory = dict_factory
+    return connection
 
 
 @pytest.fixture
