@@ -87,7 +87,6 @@ def containing_instance(some_instance):
 
 @pytest.fixture
 def connection():
-    print("Connection Called")
     connection = sqlite3.connect(":memory:")
     # connection.row_factory = dict_factory
     return connection
