@@ -61,7 +61,7 @@ def test_with_parent_and_child_inserted_has_two_records(with_parent_and_child_in
     assert len(all_instances) == 2
 
 
-def test_can_query_child(with_parent_and_child_inserted):
+def test_can_select_child(with_parent_and_child_inserted):
     query = Select(SelfReference).where("name = ?", ("child",))
     child = list(query(with_parent_and_child_inserted))[0]
     assert child.name == "child"

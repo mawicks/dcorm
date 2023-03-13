@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import datetime as dt
-from typing import Optional
+from typing import Optional, Union
 from zoneinfo import ZoneInfo
 import sqlite3
 
@@ -16,6 +16,7 @@ SOME_OTHER_FLOAT = 2.3
 
 SOME_STRING = "foo"
 SOME_OTHER_STRING = "bar"
+YET_ANOTHER_STRING = "baz"
 
 SOME_DATE = dt.date(year=2023, month=2, day=18)
 SOME_OTHER_DATE = dt.date(year=2022, month=1, day=10)
@@ -48,6 +49,8 @@ class SomeDataClass:
     a_date: dt.date
     a_datetime: dt.datetime
     a_nullable_int: None | int = None
+    a_nullable_float: Optional[float] = None
+    a_nullable_string: Union[str, None] = None
 
 
 @dcorm.orm_dataclass
@@ -59,7 +62,14 @@ class ContainingDataClass:
 
 @pytest.fixture
 def some_instance():
-    return SomeDataClass(SOME_INT, SOME_FLOAT, SOME_STRING, SOME_DATE, SOME_DATETIME)
+    return SomeDataClass(
+        SOME_INT,
+        SOME_FLOAT,
+        SOME_STRING,
+        SOME_DATE,
+        SOME_DATETIME,
+        a_nullable_string=YET_ANOTHER_STRING,
+    )
 
 
 @pytest.fixture
