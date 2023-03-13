@@ -13,6 +13,28 @@ import pytest
 class SelfReference:
     name: str
     parent: SelfReference | None = None
+    a_nullable_int: int | None = None
+    a_nullable_int_with_integer_default: int | None = 42
+
+
+def test_instance_has_expected_default_values():
+    instance = SelfReference("foo")
+    assert instance.name == "foo"
+    assert instance.parent == None
+    assert instance.a_nullable_int == None
+    assert instance.a_nullable_int_with_integer_default == 42
+
+
+def test_instance_has_expected_set_values():
+    instance = SelfReference(
+        "foo",
+        a_nullable_int=10,
+        a_nullable_int_with_integer_default=19,
+    )
+    assert instance.name == "foo"
+    assert instance.parent == None
+    assert instance.a_nullable_int == 10
+    assert instance.a_nullable_int_with_integer_default == 19
 
 
 @pytest.fixture

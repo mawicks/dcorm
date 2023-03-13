@@ -114,6 +114,25 @@ def with_two_rows_inserted(with_one_row_inserted, some_other_instance):
     return with_one_row_inserted
 
 
+def test_instance_has_expected_fields():
+    instance = SomeDataClass(
+        SOME_INT,
+        SOME_FLOAT,
+        SOME_STRING,
+        SOME_DATE,
+        SOME_DATETIME,
+        a_nullable_string=YET_ANOTHER_STRING,
+    )
+    assert instance.an_int == SOME_INT
+    assert instance.a_float == SOME_FLOAT
+    assert instance.a_str == SOME_STRING
+    assert instance.a_date == SOME_DATE
+    assert instance.a_datetime == SOME_DATETIME
+    assert instance.a_nullable_float == None
+    assert instance.a_nullable_int == None
+    assert instance.a_nullable_string == YET_ANOTHER_STRING
+
+
 def test_orm_decorated_class_has_orm_returns_true():
     assert dcorm.has_orm(SomeDataClass) is True
 
