@@ -53,6 +53,18 @@ class SomeDataClass:
     a_nullable_string: Union[str, None] = None
 
 
+EXPECTED_SQLITE_TYPE = {
+    "an_int": "INTEGER",
+    "a_float": "REAL",
+    "a_str": "TEXT",
+    "a_date": "TEXT",
+    "a_datetime": "TEXT",
+    "a_nullable_int": "INTEGER",
+    "a_nullable_float": "REAL",
+    "a_nullable_string": "TEXT",
+}
+
+
 @dcorm.orm_dataclass
 @dataclass
 class ContainingDataClass:
@@ -112,6 +124,16 @@ def with_one_row_inserted(with_tables_created, some_instance):
 def with_two_rows_inserted(with_one_row_inserted, some_other_instance):
     dcorm.insert(with_one_row_inserted, some_other_instance)
     return with_one_row_inserted
+
+
+def test_columns_have_expected_db_types(with_tables_created):
+    cursor = with_tables_created.execute("PRAGMA table_info(SomeDataClass)")
+    for row in cursor:
+        d = {
+            field_description[0]: field_data
+            for field_description, field_data in zip(cursor.description, row)
+        }
+        assert d["type"] == EXPECTED_SQLITE_TYPE[d["name"]]
 
 
 def test_instance_has_expected_fields():
