@@ -36,6 +36,18 @@ SOME_OTHER_DATETIME = dt.datetime(
 )
 
 
+EXPECTED_SQLITE_TYPE = {
+    "an_int": "INTEGER",
+    "a_float": "REAL",
+    "a_str": "TEXT",
+    "a_date": "TEXT",
+    "a_datetime": "TEXT",
+    "a_nullable_int": "INTEGER",
+    "a_nullable_float": "REAL",
+    "a_nullable_string": "TEXT",
+}
+
+
 class SomeNonDataClass:
     an_int: int
 
@@ -53,23 +65,11 @@ class SomeDataClass:
     a_nullable_string: Union[str, None] = None
 
 
-EXPECTED_SQLITE_TYPE = {
-    "an_int": "INTEGER",
-    "a_float": "REAL",
-    "a_str": "TEXT",
-    "a_date": "TEXT",
-    "a_datetime": "TEXT",
-    "a_nullable_int": "INTEGER",
-    "a_nullable_float": "REAL",
-    "a_nullable_string": "TEXT",
-}
-
-
 @dcorm.orm_dataclass
 @dataclass
 class ContainingDataClass:
     a: int
-    containee: SomeDataClass
+    containee: SomeDataClass | None
 
 
 @pytest.fixture
@@ -290,6 +290,16 @@ def test_inserting_container_doesnt_insert_preexisting_containee(
     assert len(all_containee_instances) == 1
 
 
+def test_containee_autoloads(with_tables_created, containing_instance):
+    dcorm.insert(with_tables_created, containing_instance)
+    all_container_instances = list(
+        dcorm.get_all(with_tables_created, ContainingDataClass)
+    )
+    single_instance = all_container_instances[0]
+    containee = single_instance.containee
+    assert containee is not None and containee.an_int == SOME_INT
+
+
 def test_updating_container_modifies_containee_reference(
     with_tables_created, containing_instance, some_other_instance
 ):
@@ -298,13 +308,3 @@ def test_updating_container_modifies_containee_reference(
     dcorm.update(with_tables_created, containing_instance)
     read_container = dcorm.get_by_id(with_tables_created, ContainingDataClass, id)
     assert read_container.containee == some_other_instance
-
-
-def test_containee_autoloads(with_tables_created, containing_instance):
-    dcorm.insert(with_tables_created, containing_instance)
-    all_container_instances = list(
-        dcorm.get_all(with_tables_created, ContainingDataClass)
-    )
-    single_instance = all_container_instances[0]
-    containee = single_instance.containee
-    assert containee.an_int == SOME_INT
