@@ -300,6 +300,17 @@ def test_containee_autoloads(with_tables_created, containing_instance):
     assert containee is not None and containee.an_int == SOME_INT
 
 
+def test_can_insert_when_containee_is_none(with_tables_created):
+    dcorm.insert(with_tables_created, ContainingDataClass(a=13, containee=None))
+
+
+def test_can_read_when_containee_is_none(with_tables_created):
+    instance = ContainingDataClass(a=13, containee=None)
+    id = dcorm.insert(with_tables_created, instance)
+    read_instance = dcorm.get_by_id(with_tables_created, ContainingDataClass, id)
+    assert instance == read_instance
+
+
 def test_updating_container_modifies_containee_reference(
     with_tables_created, containing_instance, some_other_instance
 ):
