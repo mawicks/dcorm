@@ -19,7 +19,8 @@
 			},
 			"extensions": [
 				"ms-python.python",
-				"njpwerner.autodocstring"
+				"njpwerner.autodocstring",
+				"ryanluker.vscode-coverage-gutters"
 			]
 		}
 	},
