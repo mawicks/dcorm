@@ -69,11 +69,11 @@ class SomeDataClass:
 @dataclass
 class ContainingDataClass:
     a: int
-    containee: SomeDataClass | None
+    containee: Optional[SomeDataClass]
 
 
 @pytest.fixture
-def some_instance():
+def some_instance() -> SomeDataClass:
     return SomeDataClass(
         SOME_INT,
         SOME_FLOAT,
@@ -85,7 +85,7 @@ def some_instance():
 
 
 @pytest.fixture
-def some_other_instance():
+def some_other_instance() -> SomeDataClass:
     return SomeDataClass(
         SOME_OTHER_INT,
         SOME_OTHER_FLOAT,
@@ -243,7 +243,7 @@ def test_update_modifies_record(
     # Update the record
     dcorm.update(with_tables_created, some_instance)
 
-    # Read the record back from it's original location
+    # Read the record back from its original location
     read_instance = dcorm.get_by_id(with_tables_created, SomeDataClass, id)
 
     # Confirm some change/unchanged fields.

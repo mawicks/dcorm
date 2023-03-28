@@ -75,7 +75,7 @@ def test_inserted_child_is_retrievable(with_tables_created: sqlite3.Connection):
     # This should insert both the parent and the child
     id = dcorm.insert(with_tables_created, child)
     instance = dcorm.get_by_id(with_tables_created, SelfReference, id)
-    assert instance.name == "child"
+    assert instance.name == "child"  # type: ignore
 
 
 def test_with_parent_and_child_inserted_has_two_records(with_parent_and_child_inserted):
