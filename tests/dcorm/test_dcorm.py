@@ -126,14 +126,20 @@ def with_two_rows_inserted(with_one_row_inserted, some_other_instance):
     return with_one_row_inserted
 
 
-def test_columns_have_expected_db_types(with_tables_created):
-    cursor = with_tables_created.execute("PRAGMA table_info(SomeDataClass)")
-    for row in cursor:
-        d = {
-            field_description[0]: field_data
-            for field_description, field_data in zip(cursor.description, row)
-        }
-        assert d["type"] == EXPECTED_SQLITE_TYPE[d["name"]]
+def test_orm_decorated_class_has_orm_returns_true():
+    assert dcorm.has_orm(SomeDataClass) is True
+
+
+def test_orm_decorated_instance_has_orm_returns_true(some_instance):
+    assert dcorm.has_orm(some_instance) is True
+
+
+def test_undecorated_class_has_orm_returns_false():
+    assert dcorm.has_orm(SomeNonDataClass) is False
+
+
+def test_undecorated_instance_has_orm_returns_false():
+    assert dcorm.has_orm(SomeNonDataClass()) is False
 
 
 def test_instance_has_expected_fields():
@@ -155,20 +161,8 @@ def test_instance_has_expected_fields():
     assert instance.a_nullable_string == YET_ANOTHER_STRING
 
 
-def test_orm_decorated_class_has_orm_returns_true():
-    assert dcorm.has_orm(SomeDataClass) is True
-
-
-def test_orm_decorated_instance_has_orm_returns_true(some_instance):
-    assert dcorm.has_orm(some_instance) is True
-
-
-def test_undecorated_class_has_orm_returns_false():
-    assert dcorm.has_orm(SomeNonDataClass) is False
-
-
-def test_undecorated_instance_has_orm_returns_false():
-    assert dcorm.has_orm(SomeNonDataClass()) is False
+def test_create_executes_no_exception(connection: sqlite3.Connection):
+    dcorm.create(connection, SomeDataClass)
 
 
 def test_create_raises_on_non_dataclass(connection: sqlite3.Connection):
@@ -176,8 +170,14 @@ def test_create_raises_on_non_dataclass(connection: sqlite3.Connection):
         dcorm.create(connection, SomeNonDataClass)
 
 
-def test_create_executes_no_exception(connection: sqlite3.Connection):
-    dcorm.create(connection, SomeDataClass)
+def test_columns_have_expected_db_types(with_tables_created):
+    cursor = with_tables_created.execute("PRAGMA table_info(SomeDataClass)")
+    for row in cursor:
+        d = {
+            field_description[0]: field_data
+            for field_description, field_data in zip(cursor.description, row)
+        }
+        assert d["type"] == EXPECTED_SQLITE_TYPE[d["name"]]
 
 
 def test_create_raises_when_exists(with_tables_created: sqlite3.Connection):
