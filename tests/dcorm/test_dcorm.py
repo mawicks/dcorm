@@ -196,19 +196,37 @@ def test_insert(with_tables_created: sqlite3.Connection, some_instance: SomeData
     assert id is not None
 
 
-def test_whether_order_matters(connection, some_instance, containing_instance):
+def test_whether_order_matters(connection):
     # This tests whether an implementation detail causes a dependence on order.
     # Because of the potential for forward references, descriptors don't get
     # added until the first *use* of the ORM after the forward references get
     # resolved.  Here we'll create an object with an attribute containing
     # another object *before* using any ORM layers.  The descriptors won't
     # exist when we construct the object.  Make sure the descriptor can find
-    # the attribute.
-    dcorm.create(connection, SomeDataClass, drop_if_exists=False)
-    dcorm.create(connection, ContainingDataClass, drop_if_exists=False)
-    id = dcorm.insert(connection, containing_instance)
-    instance = dcorm.get_by_id(connection, ContainingDataClass, id)
-    assert instance.containee == some_instance
+    # the attribute.  It's also important to create the classes inside
+    # this test since classes used in other tests get adjusted before
+    # this test runs.  If you don't do this, running other tests can affect
+    # whether this test succeeds or not.  It can succeed even in the presence
+    # of a bug if other tests run first.
+    @dcorm.orm_dataclass
+    @dataclass
+    class Foo:
+        a: int
+
+    @dcorm.orm_dataclass
+    @dataclass
+    class Bar:
+        b: int
+        foo: Foo
+
+    foo = Foo(a=7)
+    bar = Bar(b=11, foo=foo)
+
+    dcorm.create(connection, Foo, drop_if_exists=False)
+    dcorm.create(connection, Bar, drop_if_exists=False)
+    id = dcorm.insert(connection, bar)
+    instance = dcorm.get_by_id(connection, Bar, id)
+    assert instance.foo == foo
 
 
 def test_read_after_insert_returns_expected_record(
