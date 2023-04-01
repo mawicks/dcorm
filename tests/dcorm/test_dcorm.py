@@ -102,27 +102,30 @@ def containing_instance(some_instance):
 
 @pytest.fixture
 def connection():
-    connection = sqlite3.connect(":memory:")
-    # connection.row_factory = dict_factory
-    return connection
+    empty_db = sqlite3.connect(":memory:")
+    dcorm.set_connection_factory(lambda: empty_db)
+    return empty_db
 
 
 @pytest.fixture
 def with_tables_created(connection):
     dcorm.create(connection, SomeDataClass)
     dcorm.create(connection, ContainingDataClass)
+    dcorm.set_connection_factory(lambda: connection)
     return connection
 
 
 @pytest.fixture
 def with_one_row_inserted(with_tables_created, some_instance):
     dcorm.insert(with_tables_created, some_instance)
+    dcorm.set_connection_factory(with_tables_created)
     return with_tables_created
 
 
 @pytest.fixture
 def with_two_rows_inserted(with_one_row_inserted, some_other_instance):
     dcorm.insert(with_one_row_inserted, some_other_instance)
+    dcorm.set_connection_factory(with_one_row_inserted)
     return with_one_row_inserted
 
 
