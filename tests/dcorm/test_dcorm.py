@@ -103,7 +103,6 @@ def containing_instance(some_instance):
 @pytest.fixture
 def connection():
     empty_db = sqlite3.connect(":memory:")
-    dcorm.set_connection_factory(lambda: empty_db)
     return empty_db
 
 
@@ -142,7 +141,7 @@ def test_undecorated_class_has_orm_returns_false():
 
 
 def test_undecorated_instance_has_orm_returns_false():
-    assert dcorm.has_orm(SomeNonDataClass()) is False
+    assert dcorm.has_orm(SomeNonDataClass()) is False  # type: ignore
 
 
 def test_instance_has_expected_fields():
@@ -172,7 +171,7 @@ def test_create_executes_no_exception(connection: sqlite3.Connection):
 def test_create_raises_on_non_dataclass(connection: sqlite3.Connection):
     dcorm.set_connection_factory(lambda: connection)
     with pytest.raises(TypeError):
-        dcorm.create(connection, SomeNonDataClass)
+        dcorm.create(SomeNonDataClass)
 
 
 def test_columns_have_expected_db_types(with_tables_created):
