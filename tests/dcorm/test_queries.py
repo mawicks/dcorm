@@ -8,7 +8,7 @@ from sandbox.dcorm.dcorm import (
     create,
     insert,
     get_all,
-    set_connection_context_mgr,
+    set_connection_factory,
 )
 
 
@@ -106,7 +106,7 @@ def test_select_bar_join_bar_on_some_foo_raises_type_error():
 def test_select_bar_join_foo_where_specific_foo_returns_correct_records(
     relations_inserted,
 ):
-    set_connection_context_mgr(lambda: relations_inserted)
+    set_connection_factory(lambda: relations_inserted)
     query = Select(Bar).join("some_foo").where("some_foo.a = 1")
     results = list(query(relations_inserted))
     assert results[0].some_foo.a == 1

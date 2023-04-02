@@ -40,14 +40,14 @@ def test_instance_has_expected_set_values():
 @pytest.fixture
 def connection():
     empty_db = sqlite3.connect(":memory:")
-    dcorm.set_connection_context_mgr(lambda: empty_db)
+    dcorm.set_connection_factory(lambda: empty_db)
     return empty_db
 
 
 @pytest.fixture
 def with_tables_created(connection):
     dcorm.create(connection, SelfReference)
-    dcorm.set_connection_context_mgr(lambda: connection)
+    dcorm.set_connection_factory(lambda: connection)
     return connection
 
 
@@ -59,7 +59,7 @@ def with_parent_and_child_inserted(with_tables_created):
 
     # This should insert both the parent and the child
     dcorm.insert(with_tables_created, child)
-    dcorm.set_connection_context_mgr(lambda: with_tables_created)
+    dcorm.set_connection_factory(lambda: with_tables_created)
     return with_tables_created
 
 
