@@ -42,7 +42,6 @@ def test_instance_has_expected_set_values():
 @pytest.fixture
 def connection():
     empty_db = sqlite3.connect(":memory:")
-    dcorm.set_connection_factory(lambda: empty_db)
     return empty_db
 
 
@@ -95,12 +94,12 @@ def test_with_parent_and_child_inserted_has_two_records(with_parent_and_child_in
 def test_can_select_child(with_parent_and_child_inserted):
     dcorm.set_connection_factory(lambda: with_parent_and_child_inserted)
     query = Select(SelfReference).where("name = ?", ("child",))
-    child = list(query())[0]
+    child = cast(SelfReference, list(query())[0])
     assert child.name == "child"
 
 
 def test_queried_child_can_resolve_parent(with_parent_and_child_inserted):
     dcorm.set_connection_factory(lambda: with_parent_and_child_inserted)
     query = Select(SelfReference).where("name = ?", ("child",))
-    child = list(query())[0]
-    assert child.parent.name == "parent"
+    child = cast(SelfReference, list(query())[0])
+    assert child.parent is not None and child.parent.name == "parent"

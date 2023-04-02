@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import pytest
 import sqlite3
+from typing import cast
 
 from sandbox.dcorm.queries import Select
 from sandbox.dcorm.dcorm import (
@@ -117,6 +118,6 @@ def test_select_bar_join_foo_where_specific_foo_returns_correct_records(
 ):
     set_connection_factory(lambda: relations_inserted)
     query = Select(Bar).join("some_foo").where("some_foo.a = 1")
-    results = list(query())
+    results = cast(list[Bar], list(query()))
     assert results[0].some_foo.a == 1
     assert results[1].some_foo.a == 1
