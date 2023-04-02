@@ -41,7 +41,7 @@ def test_instance_has_expected_set_values():
 
 @pytest.fixture
 def connection():
-    empty_db = cast(Connection, sqlite3.connect(":memory:"))
+    empty_db = sqlite3.connect(":memory:")
     dcorm.set_connection_factory(lambda: empty_db)
     return empty_db
 
