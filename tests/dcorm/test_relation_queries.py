@@ -3,7 +3,12 @@ import pytest
 import sqlite3
 
 from sandbox.dcorm.queries import Select
-from sandbox.dcorm.dcorm import orm_dataclass, create, insert, set_connection_factory
+from sandbox.dcorm.dcorm import (
+    orm_dataclass,
+    create,
+    insert,
+    set_connection_context_mgr,
+)
 
 
 @orm_dataclass
@@ -87,7 +92,7 @@ class RegistrationDatabase:
 @pytest.fixture
 def empty_db():
     connection = sqlite3.connect(":memory:")
-    set_connection_factory(lambda: connection)
+    set_connection_context_mgr(lambda: connection)
     return connection
 
 
@@ -95,7 +100,7 @@ def empty_db():
 def registration_database(empty_db):
     registrations = RegistrationDatabase(empty_db)
     registrations.init()
-    set_connection_factory(lambda: empty_db)
+    set_connection_context_mgr(lambda: empty_db)
     return empty_db
 
 
@@ -149,7 +154,7 @@ def test_class_list_query(registration_database, course, expected_students):
     ],
 )
 def test_student_schedule_query(registration_database, student, expected_courses):
-    set_connection_factory(lambda: registration_database)
+    set_connection_context_mgr(lambda: registration_database)
     query = Select(Registration).join("student").where("student.name = ?", (student,))
     class_list = [
         registration.course.title for registration in query(registration_database)
