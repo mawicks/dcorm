@@ -109,23 +109,23 @@ def connection():
 
 @pytest.fixture
 def with_tables_created(connection):
-    dcorm.create(connection, SomeDataClass)
-    dcorm.create(connection, ContainingDataClass)
     dcorm.set_connection_factory(lambda: connection)
+    dcorm.create(SomeDataClass)
+    dcorm.create(ContainingDataClass)
     return connection
 
 
 @pytest.fixture
 def with_one_row_inserted(with_tables_created, some_instance):
-    dcorm.insert(with_tables_created, some_instance)
     dcorm.set_connection_factory(lambda: with_tables_created)
+    dcorm.insert(some_instance)
     return with_tables_created
 
 
 @pytest.fixture
 def with_two_rows_inserted(with_one_row_inserted, some_other_instance):
-    dcorm.insert(with_one_row_inserted, some_other_instance)
     dcorm.set_connection_factory(lambda: with_one_row_inserted)
+    dcorm.insert(some_other_instance)
     return with_one_row_inserted
 
 
@@ -165,10 +165,12 @@ def test_instance_has_expected_fields():
 
 
 def test_create_executes_no_exception(connection: sqlite3.Connection):
-    dcorm.create(connection, SomeDataClass)
+    dcorm.set_connection_factory(lambda: connection)
+    dcorm.create(SomeDataClass)
 
 
 def test_create_raises_on_non_dataclass(connection: sqlite3.Connection):
+    dcorm.set_connection_factory(lambda: connection)
     with pytest.raises(TypeError):
         dcorm.create(connection, SomeNonDataClass)
 
@@ -184,18 +186,21 @@ def test_columns_have_expected_db_types(with_tables_created):
 
 
 def test_create_raises_when_exists(with_tables_created: sqlite3.Connection):
+    dcorm.set_connection_factory(lambda: with_tables_created)
     with pytest.raises(Exception):
-        dcorm.create(with_tables_created, SomeDataClass)
+        dcorm.create(SomeDataClass)
 
 
 def test_create_no_exception_with_drop_if_exists(
     with_tables_created: sqlite3.Connection,
 ):
-    dcorm.create(with_tables_created, SomeDataClass, drop_if_exists=True)
+    dcorm.set_connection_factory(lambda: with_tables_created)
+    dcorm.create(SomeDataClass, drop_if_exists=True)
 
 
 def test_insert(with_tables_created: sqlite3.Connection, some_instance: SomeDataClass):
-    id = dcorm.insert(with_tables_created, some_instance)
+    dcorm.set_connection_factory(lambda: with_tables_created)
+    id = dcorm.insert(some_instance)
     assert id is not None
 
 
@@ -225,18 +230,20 @@ def test_whether_order_matters(connection):
     foo = Foo(a=7)
     bar = Bar(b=11, foo=foo)
 
-    dcorm.create(connection, Foo, drop_if_exists=False)
-    dcorm.create(connection, Bar, drop_if_exists=False)
-    id = dcorm.insert(connection, bar)
-    instance = dcorm.get_by_id(connection, Bar, id)
+    dcorm.set_connection_factory(lambda: connection)
+    dcorm.create(Foo, drop_if_exists=False)
+    dcorm.create(Bar, drop_if_exists=False)
+    id = dcorm.insert(bar)
+    instance = dcorm.get_by_id(Bar, id)
     assert instance.foo == foo
 
 
 def test_read_after_insert_returns_expected_record(
     with_tables_created: sqlite3.Connection, some_instance: SomeDataClass
 ):
-    id = dcorm.insert(with_tables_created, some_instance)
-    read_instance = dcorm.get_by_id(with_tables_created, SomeDataClass, id)
+    dcorm.set_connection_factory(lambda: with_tables_created)
+    id = dcorm.insert(some_instance)
+    read_instance = dcorm.get_by_id(SomeDataClass, id)
     assert read_instance == some_instance
 
 
@@ -245,9 +252,10 @@ def test_update_by_id_modifies_record(
     some_instance: SomeDataClass,
     some_other_instance: SomeDataClass,
 ):
-    id = dcorm.insert(with_tables_created, some_instance)
-    dcorm.update_by_id(with_tables_created, some_other_instance, id)
-    read_instance = dcorm.get_by_id(with_tables_created, SomeDataClass, id)
+    dcorm.set_connection_factory(lambda: with_tables_created)
+    id = dcorm.insert(some_instance)
+    dcorm.update_by_id(some_other_instance, id)
+    read_instance = dcorm.get_by_id(SomeDataClass, id)
     assert read_instance == some_other_instance
 
 
@@ -255,17 +263,18 @@ def test_update_modifies_record(
     with_tables_created: sqlite3.Connection,
     some_instance: SomeDataClass,
 ):
-    id = dcorm.insert(with_tables_created, some_instance)
+    dcorm.set_connection_factory(lambda: with_tables_created)
+    id = dcorm.insert(some_instance)
 
     # Change some fields
     some_instance.an_int = SOME_OTHER_INT
     some_instance.a_float = SOME_OTHER_FLOAT
 
     # Update the record
-    dcorm.update(with_tables_created, some_instance)
+    dcorm.update(some_instance)
 
     # Read the record back from its original location
-    read_instance = dcorm.get_by_id(with_tables_created, SomeDataClass, id)
+    read_instance = dcorm.get_by_id(SomeDataClass, id)
 
     # Confirm some change/unchanged fields.
     assert read_instance.an_int == SOME_OTHER_INT
@@ -276,82 +285,91 @@ def test_update_modifies_record(
 def test_read_causes_exception_after_delete_by_id(
     with_tables_created: sqlite3.Connection, some_instance: SomeDataClass
 ):
-    id = dcorm.insert(with_tables_created, some_instance)
-    dcorm.get_by_id(with_tables_created, SomeDataClass, id)
-    dcorm.delete_by_id(with_tables_created, SomeDataClass, id)
+    dcorm.set_connection_factory(lambda: with_tables_created)
+    id = dcorm.insert(some_instance)
+    dcorm.get_by_id(SomeDataClass, id)
+    dcorm.delete_by_id(SomeDataClass, id)
     with pytest.raises(Exception):
-        dcorm.get_by_id(with_tables_created, SomeDataClass, id)
+        dcorm.get_by_id(SomeDataClass, id)
 
 
 def test_read_causes_exception_after_delete(
     with_tables_created: sqlite3.Connection, some_instance: SomeDataClass
 ):
-    id = dcorm.insert(with_tables_created, some_instance)
-    dcorm.delete(with_tables_created, some_instance)
+    dcorm.set_connection_factory(lambda: with_tables_created)
+    id = dcorm.insert(some_instance)
+    dcorm.delete(some_instance)
     with pytest.raises(Exception):
-        dcorm.get_by_id(with_tables_created, SomeDataClass, id)
+        dcorm.get_by_id(SomeDataClass, id)
 
 
 def test_get_all_returns_two_instances(with_two_rows_inserted):
-    all_instances = list(dcorm.get_all(with_two_rows_inserted, SomeDataClass))
+    dcorm.set_connection_factory(lambda: with_two_rows_inserted)
+    all_instances = list(dcorm.get_all(SomeDataClass))
     assert len(all_instances) == 2
 
 
 def test_get_all_instances_of_expected_class(with_two_rows_inserted):
-    all_instances = list(dcorm.get_all(with_two_rows_inserted, SomeDataClass))
+    dcorm.set_connection_factory(lambda: with_two_rows_inserted)
+    all_instances = list(dcorm.get_all(SomeDataClass))
     assert type(all_instances[0]) is SomeDataClass
     assert type(all_instances[1]) is SomeDataClass
 
 
 def test_instances_from_get_all_can_be_deleted(with_two_rows_inserted):
-    for instance in dcorm.get_all(with_two_rows_inserted, SomeDataClass):
-        dcorm.delete(with_two_rows_inserted, instance)
-    assert len(list(dcorm.get_all(with_two_rows_inserted, SomeDataClass))) == 0
+    dcorm.set_connection_factory(lambda: with_two_rows_inserted)
+    for instance in dcorm.get_all(SomeDataClass):
+        dcorm.delete(instance)
+    assert len(list(dcorm.get_all(SomeDataClass))) == 0
 
 
 def test_inserting_container_also_inserts_containee(
     with_tables_created, containing_instance
 ):
-    dcorm.insert(with_tables_created, containing_instance)
-    all_containee_instances = list(dcorm.get_all(with_tables_created, SomeDataClass))
+    dcorm.set_connection_factory(lambda: with_tables_created)
+    dcorm.insert(containing_instance)
+    all_containee_instances = list(dcorm.get_all(SomeDataClass))
     assert len(all_containee_instances) == 1
 
 
 def test_inserting_container_doesnt_insert_preexisting_containee(
     with_tables_created, containing_instance
 ):
-    dcorm.insert(with_tables_created, containing_instance.containee)
-    dcorm.insert(with_tables_created, containing_instance)
-    all_containee_instances = list(dcorm.get_all(with_tables_created, SomeDataClass))
+    dcorm.set_connection_factory(lambda: with_tables_created)
+    dcorm.insert(containing_instance.containee)
+    dcorm.insert(containing_instance)
+    all_containee_instances = list(dcorm.get_all(SomeDataClass))
     assert len(all_containee_instances) == 1
 
 
 def test_containee_autoloads(with_tables_created, containing_instance):
-    dcorm.insert(with_tables_created, containing_instance)
-    all_container_instances = list(
-        dcorm.get_all(with_tables_created, ContainingDataClass)
-    )
+    dcorm.set_connection_factory(lambda: with_tables_created)
+    dcorm.insert(containing_instance)
+    all_container_instances = list(dcorm.get_all(ContainingDataClass))
     single_instance = all_container_instances[0]
     containee = single_instance.containee
     assert containee is not None and containee.an_int == SOME_INT
 
 
 def test_can_insert_when_containee_is_none(with_tables_created):
-    dcorm.insert(with_tables_created, ContainingDataClass(a=13, containee=None))
+    dcorm.set_connection_factory(lambda: with_tables_created)
+    dcorm.insert(ContainingDataClass(a=13, containee=None))
 
 
 def test_can_read_when_containee_is_none(with_tables_created):
+    dcorm.set_connection_factory(lambda: with_tables_created)
     instance = ContainingDataClass(a=13, containee=None)
-    id = dcorm.insert(with_tables_created, instance)
-    read_instance = dcorm.get_by_id(with_tables_created, ContainingDataClass, id)
+    id = dcorm.insert(instance)
+    read_instance = dcorm.get_by_id(ContainingDataClass, id)
     assert instance == read_instance
 
 
 def test_updating_container_modifies_containee_reference(
     with_tables_created, containing_instance, some_other_instance
 ):
-    id = dcorm.insert(with_tables_created, containing_instance)
+    dcorm.set_connection_factory(lambda: with_tables_created)
+    id = dcorm.insert(containing_instance)
     containing_instance.containee = some_other_instance
-    dcorm.update(with_tables_created, containing_instance)
-    read_container = dcorm.get_by_id(with_tables_created, ContainingDataClass, id)
+    dcorm.update(containing_instance)
+    read_container = dcorm.get_by_id(ContainingDataClass, id)
     assert read_container.containee == some_other_instance

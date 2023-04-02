@@ -38,32 +38,32 @@ class Registration:
 
 
 class RegistrationDatabase:
-    def __init__(self, connection):
-        self.connection = connection
+    def __init__(self):
+        pass
 
     def initialize_tables(self):
-        create(self.connection, Student, drop_if_exists=True)
-        create(self.connection, Instructor, drop_if_exists=True)
-        create(self.connection, Course, drop_if_exists=True)
-        create(self.connection, Registration, drop_if_exists=True)
+        create(Student, drop_if_exists=True)
+        create(Instructor, drop_if_exists=True)
+        create(Course, drop_if_exists=True)
+        create(Registration, drop_if_exists=True)
 
     def create_student(self, name) -> Student:
         student = Student(name)
-        insert(self.connection, student)
+        insert(student)
         return student
 
     def create_instructor(self, name) -> Instructor:
         instructor = Instructor(name)
-        insert(self.connection, instructor)
+        insert(instructor)
         return instructor
 
     def create_course(self, title, instructor) -> Course:
         course = Course(title, instructor)
-        insert(self.connection, course)
+        insert(course)
         return course
 
     def register(self, student: Student, course: Course):
-        insert(self.connection, Registration(student, course))
+        insert(Registration(student, course))
 
     def init(self):
         self.initialize_tables()
@@ -98,9 +98,9 @@ def empty_db():
 
 @pytest.fixture
 def registration_database(empty_db):
-    registrations = RegistrationDatabase(empty_db)
-    registrations.init()
     set_connection_factory(lambda: empty_db)
+    registrations = RegistrationDatabase()
+    registrations.init()
     return empty_db
 
 

@@ -32,32 +32,36 @@ def empty_db():
 
 @pytest.fixture
 def tables_created(empty_db):
-    create(empty_db, Foo)
-    create(empty_db, Bar)
+    set_connection_factory(lambda: empty_db)
+    create(Foo)
+    create(Bar)
     return empty_db
 
 
 @pytest.fixture
 def relations_inserted(tables_created):
+    set_connection_factory(lambda: tables_created)
     # Insert two Foo records and
     # Two sets of two Bar records with each
     # set of Bar records pointing at a different
     # Foo record.
     for a in range(2):
         foo = Foo(a=a)
-        insert(tables_created, foo)
+        insert(foo)
         for b in range(2):
             bar = Bar(b=b, some_foo=foo)
-            insert(tables_created, bar)
+            insert(bar)
     return tables_created
 
 
 def test_relations_inserted_has_two_foo_records(relations_inserted):
-    assert len(list(get_all(relations_inserted, Foo))) == 2
+    set_connection_factory(lambda: relations_inserted)
+    assert len(list(get_all(Foo))) == 2
 
 
 def test_relations_inserted_has_four_bar_records(relations_inserted):
-    assert len(list(get_all(relations_inserted, Bar))) == 4
+    set_connection_factory(lambda: relations_inserted)
+    assert len(list(get_all(Bar))) == 4
 
 
 def test_empty_select_foo_returns_two_records(relations_inserted):

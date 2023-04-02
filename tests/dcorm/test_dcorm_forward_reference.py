@@ -1,8 +1,10 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import sqlite3
+from typing import cast
 
 from sandbox.dcorm import dcorm
+from sandbox.dcorm.types import Connection
 from sandbox.dcorm.queries import Select
 
 import pytest
@@ -39,15 +41,15 @@ def test_instance_has_expected_set_values():
 
 @pytest.fixture
 def connection():
-    empty_db = sqlite3.connect(":memory:")
+    empty_db = cast(Connection, sqlite3.connect(":memory:"))
     dcorm.set_connection_factory(lambda: empty_db)
     return empty_db
 
 
 @pytest.fixture
 def with_tables_created(connection):
-    dcorm.create(connection, SelfReference)
     dcorm.set_connection_factory(lambda: connection)
+    dcorm.create(SelfReference)
     return connection
 
 
@@ -58,8 +60,8 @@ def with_parent_and_child_inserted(with_tables_created):
     child.parent = parent
 
     # This should insert both the parent and the child
-    dcorm.insert(with_tables_created, child)
     dcorm.set_connection_factory(lambda: with_tables_created)
+    dcorm.insert(child)
     return with_tables_created
 
 
@@ -67,8 +69,9 @@ def test_orm_decorated_class_has_orm_returns_true():
     assert dcorm.has_orm(SelfReference) is True
 
 
-def test_create_executes_no_exception(connection: sqlite3.Connection):
-    dcorm.create(connection, SelfReference)
+def test_create_executes_no_exception(connection: Connection):
+    dcorm.set_connection_factory(lambda: connection)
+    dcorm.create(SelfReference)
 
 
 def test_inserted_child_is_retrievable(with_tables_created: sqlite3.Connection):
@@ -77,13 +80,15 @@ def test_inserted_child_is_retrievable(with_tables_created: sqlite3.Connection):
     child.parent = parent
 
     # This should insert both the parent and the child
-    id = dcorm.insert(with_tables_created, child)
-    instance = dcorm.get_by_id(with_tables_created, SelfReference, id)
+    dcorm.set_connection_factory(lambda: with_tables_created)
+    id = dcorm.insert(child)
+    instance = dcorm.get_by_id(SelfReference, id)
     assert instance.name == "child"  # type: ignore
 
 
 def test_with_parent_and_child_inserted_has_two_records(with_parent_and_child_inserted):
-    all_instances = list(dcorm.get_all(with_parent_and_child_inserted, SelfReference))
+    dcorm.set_connection_factory(lambda: with_parent_and_child_inserted)
+    all_instances = list(dcorm.get_all(SelfReference))
     assert len(all_instances) == 2
 
 
