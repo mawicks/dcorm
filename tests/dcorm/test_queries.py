@@ -65,15 +65,18 @@ def test_relations_inserted_has_four_bar_records(relations_inserted):
 
 
 def test_empty_select_foo_returns_two_records(relations_inserted):
-    assert len(list(Select(Foo)(relations_inserted))) == 2
+    set_connection_factory(lambda: relations_inserted)
+    assert len(list(Select(Foo)())) == 2
 
 
 def test_empty_select_bar_returns_four_records(relations_inserted):
-    assert len(list(Select(Bar)(relations_inserted))) == 4
+    set_connection_factory(lambda: relations_inserted)
+    assert len(list(Select(Bar)())) == 4
 
 
 def test_select_bar_join_foo_returns_four_records(relations_inserted):
-    assert len(list(Select(Bar).join("some_foo")(relations_inserted))) == 4
+    set_connection_factory(lambda: relations_inserted)
+    assert len(list(Select(Bar).join("some_foo")())) == 4
 
 
 def test_select_bar_join_foo_raises_with_invalid_field_name():
@@ -87,15 +90,17 @@ def test_select_bar_join_foo_raises_with_non_dataclass_field():
 
 
 def test_select_bar_join_foo_where_specific_foo_returns_two_records(relations_inserted):
+    set_connection_factory(lambda: relations_inserted)
     query = Select(Bar).join("some_foo").where("some_foo.a = 1")
-    results = list(query(relations_inserted))
+    results = list(query())
     assert len(results) == 2
 
 
 def test_select_bar_join_foo_by_joining_select(relations_inserted):
+    set_connection_factory(lambda: relations_inserted)
     selected_foo = Select(Foo).where("Foo.a = 1")
     query = Select(Bar).join("some_foo", selected_foo)
-    results = list(query(relations_inserted))
+    results = list(query())
     assert len(results) == 2
 
 
@@ -112,6 +117,6 @@ def test_select_bar_join_foo_where_specific_foo_returns_correct_records(
 ):
     set_connection_factory(lambda: relations_inserted)
     query = Select(Bar).join("some_foo").where("some_foo.a = 1")
-    results = list(query(relations_inserted))
+    results = list(query())
     assert results[0].some_foo.a == 1
     assert results[1].some_foo.a == 1

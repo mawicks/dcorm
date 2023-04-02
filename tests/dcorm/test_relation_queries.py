@@ -106,12 +106,9 @@ def registration_database(empty_db):
 
 # Tests for queries involving a relation
 def test_registrations_where_equal_algebra_returns_two(registration_database):
-    algebra = next(
-        iter(Select(Course).where("title = ?", ("Algebra",))(registration_database))
-    )
-    registrations = Select(Registration).where_equal("course", algebra)(
-        registration_database
-    )
+    set_connection_factory(lambda: registration_database)
+    algebra = next(iter(Select(Course).where("title = ?", ("Algebra",))()))
+    registrations = Select(Registration).where_equal("course", algebra)()
     assert len(list(registrations)) == 2
 
 
@@ -119,12 +116,9 @@ def test_registrations_where_equal_algebra_returns_two(registration_database):
 def test_registrations_where_with_object_substitution_for_algebra_returns_two(
     registration_database,
 ):
-    algebra = next(
-        iter(Select(Course).where("title = ?", ("Algebra",))(registration_database))
-    )
-    registrations = Select(Registration).where("course = ?", (algebra,))(
-        registration_database
-    )
+    set_connection_factory(lambda: registration_database)
+    algebra = next(iter(Select(Course).where("title = ?", ("Algebra",))()))
+    registrations = Select(Registration).where("course = ?", (algebra,))()
     assert len(list(registrations)) == 2
 
 
@@ -137,10 +131,9 @@ def test_registrations_where_with_object_substitution_for_algebra_returns_two(
     ],
 )
 def test_class_list_query(registration_database, course, expected_students):
+    set_connection_factory(lambda: registration_database)
     query = Select(Registration).join("course").where("course.title = ?", (course,))
-    class_list = [
-        registration.student.name for registration in query(registration_database)
-    ]
+    class_list = [registration.student.name for registration in query()]
     # Check the length before turning into a set to ensure there are no duplicates.
     assert set(class_list) == expected_students
 
@@ -156,9 +149,7 @@ def test_class_list_query(registration_database, course, expected_students):
 def test_student_schedule_query(registration_database, student, expected_courses):
     set_connection_factory(lambda: registration_database)
     query = Select(Registration).join("student").where("student.name = ?", (student,))
-    class_list = [
-        registration.course.title for registration in query(registration_database)
-    ]
+    class_list = [registration.course.title for registration in query()]
     # Check the length before turning into a set to ensure there are no duplicates.
     assert set(class_list) == expected_courses
 
@@ -171,10 +162,11 @@ def test_student_schedule_query(registration_database, student, expected_courses
     ],
 )
 def test_instructor_schedule_query(registration_database, instructor, expected_courses):
+    set_connection_factory(lambda: registration_database)
     query = (
         Select(Course).join("instructor").where("instructor.name = ?", (instructor,))
     )
-    class_list = [course.title for course in query(registration_database)]
+    class_list = [course.title for course in query()]
     # Check the length before turning into a set to ensure there are no duplicates.
     assert set(class_list) == expected_courses
 
@@ -189,10 +181,11 @@ def test_instructor_schedule_query(registration_database, instructor, expected_c
 def test_students_having_instructor(
     registration_database, instructor, expected_students
 ):
+    set_connection_factory(lambda: registration_database)
     instructor_courses = (
         Select(Course).join("instructor").where("instructor.name = ?", (instructor,))
     )
     instructor_registrations = Select(Registration).join("course", instructor_courses)
     query = Select(Student).join(None, instructor_registrations, "student")
-    students = [student.name for student in query(registration_database)]
+    students = [student.name for student in query()]
     assert set(students) == expected_students
