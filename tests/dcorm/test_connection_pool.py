@@ -1,4 +1,4 @@
-from typing import Any, cast, Iterable, Tuple
+from typing import cast, Iterable, Tuple
 
 import pytest
 

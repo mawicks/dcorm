@@ -3,13 +3,13 @@ from dataclasses import dataclass
 import sqlite3
 from typing import cast
 
-from sandbox.dcorm.dcorm import orm as dcorm
+from sandbox.dcorm.dcorm import orm
 from sandbox.dcorm.types import Connection
 
 import pytest
 
 
-@dcorm.orm_dataclass
+@orm.orm_dataclass
 @dataclass
 class SelfReference:
     name: str
@@ -46,8 +46,8 @@ def connection():
 
 @pytest.fixture
 def with_tables_created(connection):
-    dcorm.set_connection_factory(lambda: connection)
-    dcorm.create(SelfReference)
+    orm.set_connection_factory(lambda: connection)
+    orm.create(SelfReference)
     return connection
 
 
@@ -58,18 +58,18 @@ def with_parent_and_child_inserted(with_tables_created):
     child.parent = parent
 
     # This should insert both the parent and the child
-    dcorm.set_connection_factory(lambda: with_tables_created)
-    dcorm.insert(child)
+    orm.set_connection_factory(lambda: with_tables_created)
+    orm.insert(child)
     return with_tables_created
 
 
 def test_orm_decorated_class_has_orm_returns_true():
-    assert dcorm.has_orm(SelfReference) is True
+    assert orm.has_orm(SelfReference) is True
 
 
 def test_create_executes_no_exception(connection: Connection):
-    dcorm.set_connection_factory(lambda: connection)
-    dcorm.create(SelfReference)
+    orm.set_connection_factory(lambda: connection)
+    orm.create(SelfReference)
 
 
 def test_inserted_child_is_retrievable(with_tables_created: sqlite3.Connection):
@@ -78,27 +78,27 @@ def test_inserted_child_is_retrievable(with_tables_created: sqlite3.Connection):
     child.parent = parent
 
     # This should insert both the parent and the child
-    dcorm.set_connection_factory(lambda: with_tables_created)
-    id = dcorm.insert(child)
-    instance = dcorm.get_by_id(SelfReference, id)
+    orm.set_connection_factory(lambda: with_tables_created)
+    id = orm.insert(child)
+    instance = orm.get_by_id(SelfReference, id)
     assert instance.name == "child"  # type: ignore
 
 
 def test_with_parent_and_child_inserted_has_two_records(with_parent_and_child_inserted):
-    dcorm.set_connection_factory(lambda: with_parent_and_child_inserted)
-    all_instances = list(dcorm.get_all(SelfReference))
+    orm.set_connection_factory(lambda: with_parent_and_child_inserted)
+    all_instances = list(orm.get_all(SelfReference))
     assert len(all_instances) == 2
 
 
 def test_can_select_child(with_parent_and_child_inserted):
-    dcorm.set_connection_factory(lambda: with_parent_and_child_inserted)
-    query = dcorm.select(SelfReference).where("name = ?", ("child",))
+    orm.set_connection_factory(lambda: with_parent_and_child_inserted)
+    query = orm.select(SelfReference).where("name = ?", ("child",))
     child = cast(SelfReference, list(query())[0])
     assert child.name == "child"
 
 
 def test_queried_child_can_resolve_parent(with_parent_and_child_inserted):
-    dcorm.set_connection_factory(lambda: with_parent_and_child_inserted)
-    query = dcorm.select(SelfReference).where("name = ?", ("child",))
+    orm.set_connection_factory(lambda: with_parent_and_child_inserted)
+    query = orm.select(SelfReference).where("name = ?", ("child",))
     child = cast(SelfReference, list(query())[0])
     assert child.parent is not None and child.parent.name == "parent"

@@ -4,7 +4,7 @@ from typing import Optional, Union
 from zoneinfo import ZoneInfo
 import sqlite3
 
-from sandbox.dcorm.dcorm import orm as dcorm
+from sandbox.dcorm.dcorm import orm
 
 import pytest
 
@@ -52,7 +52,7 @@ class SomeNonDataClass:
     an_int: int
 
 
-@dcorm.orm_dataclass
+@orm.orm_dataclass
 @dataclass
 class SomeDataClass:
     an_int: int
@@ -65,7 +65,7 @@ class SomeDataClass:
     a_nullable_string: Union[str, None] = None
 
 
-@dcorm.orm_dataclass
+@orm.orm_dataclass
 @dataclass
 class ContainingDataClass:
     a: int
@@ -108,40 +108,40 @@ def connection():
 
 @pytest.fixture
 def with_tables_created(connection):
-    dcorm.set_connection_factory(lambda: connection)
-    dcorm.create(SomeDataClass)
-    dcorm.create(ContainingDataClass)
+    orm.set_connection_factory(lambda: connection)
+    orm.create(SomeDataClass)
+    orm.create(ContainingDataClass)
     return connection
 
 
 @pytest.fixture
 def with_one_row_inserted(with_tables_created, some_instance):
-    dcorm.set_connection_factory(lambda: with_tables_created)
-    dcorm.insert(some_instance)
+    orm.set_connection_factory(lambda: with_tables_created)
+    orm.insert(some_instance)
     return with_tables_created
 
 
 @pytest.fixture
 def with_two_rows_inserted(with_one_row_inserted, some_other_instance):
-    dcorm.set_connection_factory(lambda: with_one_row_inserted)
-    dcorm.insert(some_other_instance)
+    orm.set_connection_factory(lambda: with_one_row_inserted)
+    orm.insert(some_other_instance)
     return with_one_row_inserted
 
 
 def test_orm_decorated_class_has_orm_returns_true():
-    assert dcorm.has_orm(SomeDataClass) is True
+    assert orm.has_orm(SomeDataClass) is True
 
 
 def test_orm_decorated_instance_has_orm_returns_true(some_instance):
-    assert dcorm.has_orm(some_instance) is True
+    assert orm.has_orm(some_instance) is True
 
 
 def test_undecorated_class_has_orm_returns_false():
-    assert dcorm.has_orm(SomeNonDataClass) is False
+    assert orm.has_orm(SomeNonDataClass) is False
 
 
 def test_undecorated_instance_has_orm_returns_false():
-    assert dcorm.has_orm(SomeNonDataClass()) is False  # type: ignore
+    assert orm.has_orm(SomeNonDataClass()) is False  # type: ignore
 
 
 def test_instance_has_expected_fields():
@@ -164,14 +164,14 @@ def test_instance_has_expected_fields():
 
 
 def test_create_executes_no_exception(connection: sqlite3.Connection):
-    dcorm.set_connection_factory(lambda: connection)
-    dcorm.create(SomeDataClass)
+    orm.set_connection_factory(lambda: connection)
+    orm.create(SomeDataClass)
 
 
 def test_create_raises_on_non_dataclass(connection: sqlite3.Connection):
-    dcorm.set_connection_factory(lambda: connection)
+    orm.set_connection_factory(lambda: connection)
     with pytest.raises(TypeError):
-        dcorm.create(SomeNonDataClass)
+        orm.create(SomeNonDataClass)
 
 
 def test_columns_have_expected_db_types(with_tables_created):
@@ -185,21 +185,21 @@ def test_columns_have_expected_db_types(with_tables_created):
 
 
 def test_create_raises_when_exists(with_tables_created: sqlite3.Connection):
-    dcorm.set_connection_factory(lambda: with_tables_created)
+    orm.set_connection_factory(lambda: with_tables_created)
     with pytest.raises(Exception):
-        dcorm.create(SomeDataClass)
+        orm.create(SomeDataClass)
 
 
 def test_create_no_exception_with_drop_if_exists(
     with_tables_created: sqlite3.Connection,
 ):
-    dcorm.set_connection_factory(lambda: with_tables_created)
-    dcorm.create(SomeDataClass, drop_if_exists=True)
+    orm.set_connection_factory(lambda: with_tables_created)
+    orm.create(SomeDataClass, drop_if_exists=True)
 
 
 def test_insert(with_tables_created: sqlite3.Connection, some_instance: SomeDataClass):
-    dcorm.set_connection_factory(lambda: with_tables_created)
-    id = dcorm.insert(some_instance)
+    orm.set_connection_factory(lambda: with_tables_created)
+    id = orm.insert(some_instance)
     assert id is not None
 
 
@@ -215,12 +215,12 @@ def test_whether_order_matters(connection):
     # this test runs.  If you don't do this, running other tests can affect
     # whether this test succeeds or not.  It can succeed even in the presence
     # of a bug if other tests run first.
-    @dcorm.orm_dataclass
+    @orm.orm_dataclass
     @dataclass
     class Foo:
         a: int
 
-    @dcorm.orm_dataclass
+    @orm.orm_dataclass
     @dataclass
     class Bar:
         b: int
@@ -229,20 +229,20 @@ def test_whether_order_matters(connection):
     foo = Foo(a=7)
     bar = Bar(b=11, foo=foo)
 
-    dcorm.set_connection_factory(lambda: connection)
-    dcorm.create(Foo, drop_if_exists=False)
-    dcorm.create(Bar, drop_if_exists=False)
-    id = dcorm.insert(bar)
-    instance = dcorm.get_by_id(Bar, id)
+    orm.set_connection_factory(lambda: connection)
+    orm.create(Foo, drop_if_exists=False)
+    orm.create(Bar, drop_if_exists=False)
+    id = orm.insert(bar)
+    instance = orm.get_by_id(Bar, id)
     assert instance.foo == foo
 
 
 def test_read_after_insert_returns_expected_record(
     with_tables_created: sqlite3.Connection, some_instance: SomeDataClass
 ):
-    dcorm.set_connection_factory(lambda: with_tables_created)
-    id = dcorm.insert(some_instance)
-    read_instance = dcorm.get_by_id(SomeDataClass, id)
+    orm.set_connection_factory(lambda: with_tables_created)
+    id = orm.insert(some_instance)
+    read_instance = orm.get_by_id(SomeDataClass, id)
     assert read_instance == some_instance
 
 
@@ -251,10 +251,10 @@ def test_update_by_id_modifies_record(
     some_instance: SomeDataClass,
     some_other_instance: SomeDataClass,
 ):
-    dcorm.set_connection_factory(lambda: with_tables_created)
-    id = dcorm.insert(some_instance)
-    dcorm.update_by_id(some_other_instance, id)
-    read_instance = dcorm.get_by_id(SomeDataClass, id)
+    orm.set_connection_factory(lambda: with_tables_created)
+    id = orm.insert(some_instance)
+    orm.update_by_id(some_other_instance, id)
+    read_instance = orm.get_by_id(SomeDataClass, id)
     assert read_instance == some_other_instance
 
 
@@ -262,18 +262,18 @@ def test_update_modifies_record(
     with_tables_created: sqlite3.Connection,
     some_instance: SomeDataClass,
 ):
-    dcorm.set_connection_factory(lambda: with_tables_created)
-    id = dcorm.insert(some_instance)
+    orm.set_connection_factory(lambda: with_tables_created)
+    id = orm.insert(some_instance)
 
     # Change some fields
     some_instance.an_int = SOME_OTHER_INT
     some_instance.a_float = SOME_OTHER_FLOAT
 
     # Update the record
-    dcorm.update(some_instance)
+    orm.update(some_instance)
 
     # Read the record back from its original location
-    read_instance = dcorm.get_by_id(SomeDataClass, id)
+    read_instance = orm.get_by_id(SomeDataClass, id)
 
     # Confirm some change/unchanged fields.
     assert read_instance.an_int == SOME_OTHER_INT
@@ -284,91 +284,91 @@ def test_update_modifies_record(
 def test_read_causes_exception_after_delete_by_id(
     with_tables_created: sqlite3.Connection, some_instance: SomeDataClass
 ):
-    dcorm.set_connection_factory(lambda: with_tables_created)
-    id = dcorm.insert(some_instance)
-    dcorm.get_by_id(SomeDataClass, id)
-    dcorm.delete_by_id(SomeDataClass, id)
+    orm.set_connection_factory(lambda: with_tables_created)
+    id = orm.insert(some_instance)
+    orm.get_by_id(SomeDataClass, id)
+    orm.delete_by_id(SomeDataClass, id)
     with pytest.raises(Exception):
-        dcorm.get_by_id(SomeDataClass, id)
+        orm.get_by_id(SomeDataClass, id)
 
 
 def test_read_causes_exception_after_delete(
     with_tables_created: sqlite3.Connection, some_instance: SomeDataClass
 ):
-    dcorm.set_connection_factory(lambda: with_tables_created)
-    id = dcorm.insert(some_instance)
-    dcorm.delete(some_instance)
+    orm.set_connection_factory(lambda: with_tables_created)
+    id = orm.insert(some_instance)
+    orm.delete(some_instance)
     with pytest.raises(Exception):
-        dcorm.get_by_id(SomeDataClass, id)
+        orm.get_by_id(SomeDataClass, id)
 
 
 def test_get_all_returns_two_instances(with_two_rows_inserted):
-    dcorm.set_connection_factory(lambda: with_two_rows_inserted)
-    all_instances = list(dcorm.get_all(SomeDataClass))
+    orm.set_connection_factory(lambda: with_two_rows_inserted)
+    all_instances = list(orm.get_all(SomeDataClass))
     assert len(all_instances) == 2
 
 
 def test_get_all_instances_of_expected_class(with_two_rows_inserted):
-    dcorm.set_connection_factory(lambda: with_two_rows_inserted)
-    all_instances = list(dcorm.get_all(SomeDataClass))
+    orm.set_connection_factory(lambda: with_two_rows_inserted)
+    all_instances = list(orm.get_all(SomeDataClass))
     assert type(all_instances[0]) is SomeDataClass
     assert type(all_instances[1]) is SomeDataClass
 
 
 def test_instances_from_get_all_can_be_deleted(with_two_rows_inserted):
-    dcorm.set_connection_factory(lambda: with_two_rows_inserted)
-    for instance in dcorm.get_all(SomeDataClass):
-        dcorm.delete(instance)
-    assert len(list(dcorm.get_all(SomeDataClass))) == 0
+    orm.set_connection_factory(lambda: with_two_rows_inserted)
+    for instance in orm.get_all(SomeDataClass):
+        orm.delete(instance)
+    assert len(list(orm.get_all(SomeDataClass))) == 0
 
 
 def test_inserting_container_also_inserts_containee(
     with_tables_created, containing_instance
 ):
-    dcorm.set_connection_factory(lambda: with_tables_created)
-    dcorm.insert(containing_instance)
-    all_containee_instances = list(dcorm.get_all(SomeDataClass))
+    orm.set_connection_factory(lambda: with_tables_created)
+    orm.insert(containing_instance)
+    all_containee_instances = list(orm.get_all(SomeDataClass))
     assert len(all_containee_instances) == 1
 
 
 def test_inserting_container_doesnt_insert_preexisting_containee(
     with_tables_created, containing_instance
 ):
-    dcorm.set_connection_factory(lambda: with_tables_created)
-    dcorm.insert(containing_instance.containee)
-    dcorm.insert(containing_instance)
-    all_containee_instances = list(dcorm.get_all(SomeDataClass))
+    orm.set_connection_factory(lambda: with_tables_created)
+    orm.insert(containing_instance.containee)
+    orm.insert(containing_instance)
+    all_containee_instances = list(orm.get_all(SomeDataClass))
     assert len(all_containee_instances) == 1
 
 
 def test_containee_autoloads(with_tables_created, containing_instance):
-    dcorm.set_connection_factory(lambda: with_tables_created)
-    dcorm.insert(containing_instance)
-    all_container_instances = list(dcorm.get_all(ContainingDataClass))
+    orm.set_connection_factory(lambda: with_tables_created)
+    orm.insert(containing_instance)
+    all_container_instances = list(orm.get_all(ContainingDataClass))
     single_instance = all_container_instances[0]
     containee = single_instance.containee
     assert containee is not None and containee.an_int == SOME_INT
 
 
 def test_can_insert_when_containee_is_none(with_tables_created):
-    dcorm.set_connection_factory(lambda: with_tables_created)
-    dcorm.insert(ContainingDataClass(a=13, containee=None))
+    orm.set_connection_factory(lambda: with_tables_created)
+    orm.insert(ContainingDataClass(a=13, containee=None))
 
 
 def test_can_read_when_containee_is_none(with_tables_created):
-    dcorm.set_connection_factory(lambda: with_tables_created)
+    orm.set_connection_factory(lambda: with_tables_created)
     instance = ContainingDataClass(a=13, containee=None)
-    id = dcorm.insert(instance)
-    read_instance = dcorm.get_by_id(ContainingDataClass, id)
+    id = orm.insert(instance)
+    read_instance = orm.get_by_id(ContainingDataClass, id)
     assert instance == read_instance
 
 
 def test_updating_container_modifies_containee_reference(
     with_tables_created, containing_instance, some_other_instance
 ):
-    dcorm.set_connection_factory(lambda: with_tables_created)
-    id = dcorm.insert(containing_instance)
+    orm.set_connection_factory(lambda: with_tables_created)
+    id = orm.insert(containing_instance)
     containing_instance.containee = some_other_instance
-    dcorm.update(containing_instance)
-    read_container = dcorm.get_by_id(ContainingDataClass, id)
+    orm.update(containing_instance)
+    read_container = orm.get_by_id(ContainingDataClass, id)
     assert read_container.containee == some_other_instance

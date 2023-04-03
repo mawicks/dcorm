@@ -3,29 +3,29 @@ import pytest
 import sqlite3
 from typing import cast
 
-from sandbox.dcorm.dcorm import orm as dcorm
+from sandbox.dcorm.dcorm import orm
 
 
-@dcorm.orm_dataclass
+@orm.orm_dataclass
 @dataclass
 class Student:
     name: str
 
 
-@dcorm.orm_dataclass
+@orm.orm_dataclass
 @dataclass
 class Instructor:
     name: str
 
 
-@dcorm.orm_dataclass
+@orm.orm_dataclass
 @dataclass
 class Course:
     title: str
     instructor: Instructor
 
 
-@dcorm.orm_dataclass
+@orm.orm_dataclass
 @dataclass
 class Registration:
     student: Student
@@ -37,28 +37,28 @@ class RegistrationDatabase:
         pass
 
     def initialize_tables(self):
-        dcorm.create(Student, drop_if_exists=True)
-        dcorm.create(Instructor, drop_if_exists=True)
-        dcorm.create(Course, drop_if_exists=True)
-        dcorm.create(Registration, drop_if_exists=True)
+        orm.create(Student, drop_if_exists=True)
+        orm.create(Instructor, drop_if_exists=True)
+        orm.create(Course, drop_if_exists=True)
+        orm.create(Registration, drop_if_exists=True)
 
     def create_student(self, name) -> Student:
         student = Student(name)
-        dcorm.insert(student)
+        orm.insert(student)
         return student
 
     def create_instructor(self, name) -> Instructor:
         instructor = Instructor(name)
-        dcorm.insert(instructor)
+        orm.insert(instructor)
         return instructor
 
     def create_course(self, title, instructor) -> Course:
         course = Course(title, instructor)
-        dcorm.insert(course)
+        orm.insert(course)
         return course
 
     def register(self, student: Student, course: Course):
-        dcorm.insert(Registration(student, course))
+        orm.insert(Registration(student, course))
 
     def init(self):
         self.initialize_tables()
@@ -87,13 +87,13 @@ class RegistrationDatabase:
 @pytest.fixture
 def empty_db():
     connection = sqlite3.connect(":memory:")
-    dcorm.set_connection_factory(lambda: connection)
+    orm.set_connection_factory(lambda: connection)
     return connection
 
 
 @pytest.fixture
 def registration_database(empty_db):
-    dcorm.set_connection_factory(lambda: empty_db)
+    orm.set_connection_factory(lambda: empty_db)
     registrations = RegistrationDatabase()
     registrations.init()
     return empty_db
@@ -101,9 +101,9 @@ def registration_database(empty_db):
 
 # Tests for queries involving a relation
 def test_registrations_where_equal_algebra_returns_two(registration_database):
-    dcorm.set_connection_factory(lambda: registration_database)
-    algebra = next(iter(dcorm.select(Course).where("title = ?", ("Algebra",))()))
-    registrations = dcorm.select(Registration).where_equal("course", algebra)()
+    orm.set_connection_factory(lambda: registration_database)
+    algebra = next(iter(orm.select(Course).where("title = ?", ("Algebra",))()))
+    registrations = orm.select(Registration).where_equal("course", algebra)()
     assert len(list(registrations)) == 2
 
 
@@ -111,9 +111,9 @@ def test_registrations_where_equal_algebra_returns_two(registration_database):
 def test_registrations_where_with_object_substitution_for_algebra_returns_two(
     registration_database,
 ):
-    dcorm.set_connection_factory(lambda: registration_database)
-    algebra = next(iter(dcorm.select(Course).where("title = ?", ("Algebra",))()))
-    registrations = dcorm.select(Registration).where("course = ?", (algebra,))()
+    orm.set_connection_factory(lambda: registration_database)
+    algebra = next(iter(orm.select(Course).where("title = ?", ("Algebra",))()))
+    registrations = orm.select(Registration).where("course = ?", (algebra,))()
     assert len(list(registrations)) == 2
 
 
@@ -126,10 +126,8 @@ def test_registrations_where_with_object_substitution_for_algebra_returns_two(
     ],
 )
 def test_class_list_query(registration_database, course, expected_students):
-    dcorm.set_connection_factory(lambda: registration_database)
-    query = (
-        dcorm.select(Registration).join("course").where("course.title = ?", (course,))
-    )
+    orm.set_connection_factory(lambda: registration_database)
+    query = orm.select(Registration).join("course").where("course.title = ?", (course,))
     class_list = [
         cast(Registration, registration).student.name for registration in query()
     ]
@@ -146,9 +144,9 @@ def test_class_list_query(registration_database, course, expected_students):
     ],
 )
 def test_student_schedule_query(registration_database, student, expected_courses):
-    dcorm.set_connection_factory(lambda: registration_database)
+    orm.set_connection_factory(lambda: registration_database)
     query = (
-        dcorm.select(Registration).join("student").where("student.name = ?", (student,))
+        orm.select(Registration).join("student").where("student.name = ?", (student,))
     )
     class_list = [
         cast(Registration, registration).course.title for registration in query()
@@ -165,9 +163,9 @@ def test_student_schedule_query(registration_database, student, expected_courses
     ],
 )
 def test_instructor_schedule_query(registration_database, instructor, expected_courses):
-    dcorm.set_connection_factory(lambda: registration_database)
+    orm.set_connection_factory(lambda: registration_database)
     query = (
-        dcorm.select(Course)
+        orm.select(Course)
         .join("instructor")
         .where("instructor.name = ?", (instructor,))
     )
@@ -186,15 +184,15 @@ def test_instructor_schedule_query(registration_database, instructor, expected_c
 def test_students_having_instructor(
     registration_database, instructor, expected_students
 ):
-    dcorm.set_connection_factory(lambda: registration_database)
+    orm.set_connection_factory(lambda: registration_database)
     instructor_courses = (
-        dcorm.select(Course)
+        orm.select(Course)
         .join("instructor")
         .where("instructor.name = ?", (instructor,))
     )
-    instructor_registrations = dcorm.select(Registration).join(
+    instructor_registrations = orm.select(Registration).join(
         "course", instructor_courses
     )
-    query = dcorm.select(Student).join(None, instructor_registrations, "student")
+    query = orm.select(Student).join(None, instructor_registrations, "student")
     students = [cast(Student, student).name for student in query()]
     assert set(students) == expected_students
