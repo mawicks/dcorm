@@ -3,9 +3,8 @@ from dataclasses import dataclass
 import sqlite3
 from typing import cast
 
-from sandbox.dcorm import dcorm
+from sandbox.dcorm.dcorm import orm as dcorm
 from sandbox.dcorm.types import Connection
-from sandbox.dcorm.queries import Select
 
 import pytest
 
@@ -93,13 +92,13 @@ def test_with_parent_and_child_inserted_has_two_records(with_parent_and_child_in
 
 def test_can_select_child(with_parent_and_child_inserted):
     dcorm.set_connection_factory(lambda: with_parent_and_child_inserted)
-    query = Select(SelfReference).where("name = ?", ("child",))
+    query = dcorm.select(SelfReference).where("name = ?", ("child",))
     child = cast(SelfReference, list(query())[0])
     assert child.name == "child"
 
 
 def test_queried_child_can_resolve_parent(with_parent_and_child_inserted):
     dcorm.set_connection_factory(lambda: with_parent_and_child_inserted)
-    query = Select(SelfReference).where("name = ?", ("child",))
+    query = dcorm.select(SelfReference).where("name = ?", ("child",))
     child = cast(SelfReference, list(query())[0])
     assert child.parent is not None and child.parent.name == "parent"

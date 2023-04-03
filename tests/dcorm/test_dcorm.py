@@ -4,7 +4,7 @@ from typing import Optional, Union
 from zoneinfo import ZoneInfo
 import sqlite3
 
-from sandbox.dcorm import dcorm
+from sandbox.dcorm.dcorm import orm as dcorm
 
 import pytest
 
