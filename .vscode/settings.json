@@ -13,5 +13,9 @@
         "coverage.xml",
         "jacoco.xml",
         "coverage.cobertura.xml"
-    ]
+    ],
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "python.formatting.provider": "none"
 }
