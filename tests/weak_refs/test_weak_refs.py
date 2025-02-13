@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import gc
 import pytest
 
-from sandbox.weak_refs.weak_refs import WeakKeyDict
+from dcorm.weak_refs import WeakKeyDict
 
 
 @pytest.fixture

@@ -2,7 +2,7 @@ from typing import cast, Iterable, Tuple
 
 import pytest
 
-from sandbox.dcorm.connection_pool import ConnectionPool
+from dcorm.connection_pool import ConnectionPool
 
 
 class MockCursor:

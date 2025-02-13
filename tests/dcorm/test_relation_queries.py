@@ -3,7 +3,7 @@ import pytest
 import sqlite3
 from typing import cast
 
-from sandbox.dcorm import orm
+from dcorm import orm
 
 
 @orm.orm_dataclass
