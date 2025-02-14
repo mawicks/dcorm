@@ -1,5 +1,5 @@
 from __future__ import annotations
-from sandbox.dcorm.types import Connection, ConnectionFactory
+from dcorm.types import Connection, ConnectionFactory
 
 
 class ConnectionContextMgr:

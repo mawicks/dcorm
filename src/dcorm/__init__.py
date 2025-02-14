@@ -1,3 +1,3 @@
-from sandbox.dcorm.dcorm import ORM
+from dcorm.dcorm import ORM
 
 orm = ORM()

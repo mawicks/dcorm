@@ -1,7 +1,7 @@
 import dataclasses
-from sandbox.dcorm.connection_pool import ConnectionContextMgr
-from sandbox.dcorm.dcorm import ORM, SQLITE_ROWID, comma_separated_names
-from sandbox.dcorm.types import DataClass, DataClassType, Field, SQLParameter
+from dcorm.connection_pool import ConnectionContextMgr
+from dcorm.dcorm import ORM, SQLITE_ROWID, comma_separated_names
+from dcorm.types import DataClass, DataClassType, Field, SQLParameter
 
 
 from typing import Any, Iterator

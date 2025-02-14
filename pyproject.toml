@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "dcorm"
 version = "0.1.0"
-description = "Sandbox for personal projects"
+description = "DCORM"
 authors = ["Mark Wicks <mawicks@gmail.com>"]
 readme = "README.md"
 

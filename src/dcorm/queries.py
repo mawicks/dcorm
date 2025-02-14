@@ -3,19 +3,19 @@ from __future__ import annotations
 import dataclasses
 from typing import Any, Iterable
 
-from sandbox.dcorm.dcorm import (
+from dcorm.dcorm import (
     ORM,
     SQLITE_ROWID,
     comma_separated_names,
 )
-from sandbox.dcorm.types import (
+from dcorm.types import (
     DataClass,
     DataClassType,
     Connection,
     Field,
     SQLParameter,
 )
-from sandbox.dcorm.connection_pool import ConnectionContextMgr
+from dcorm.connection_pool import ConnectionContextMgr
 
 
 def find_field(name: str, dataclass: DataClassType):
