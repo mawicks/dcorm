@@ -2,12 +2,16 @@ from __future__ import annotations
 from collections import defaultdict
 import dataclasses
 import datetime as dt
+import sqlite3
 from types import NoneType, UnionType
 from typing import Any, Iterator, Tuple, get_type_hints, get_args
 
 import cattr
 
 from dcorm.weak_refs import WeakKeyDict
+from dcorm.converters import register_converters
+
+register_converters()
 
 
 from dcorm.connection_pool import ConnectionPool, ConnectionContextMgr
